@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"kafka-consumer-poll-interval/Utils"
-	"kafka-consumer-poll-interval/protoUtil"
+	"kafka-proto-consumer-api/Utils"
+	"kafka-proto-consumer-api/protoUtil"
 	"log"
 	"net/http"
 	"os"
@@ -21,6 +21,13 @@ import (
 type event struct {
 	EventState string `json:"EventState"`
 	Message    string `json:"Message"`
+}
+
+type NewEvent struct {
+	Id          string
+	Label       string
+	Description string
+	Version     int32
 }
 
 func main() {
@@ -65,28 +72,31 @@ func consumerPoll(w http.ResponseWriter, r *http.Request) {
 }
 
 func ProducerToTopic(w http.ResponseWriter, r *http.Request) {
+	var e NewEvent
 	topic := mux.Vars(r)["KafkaTopic"]
 	w.Header().Set("Content-Type", "application/json")
-	reqBody, err := ioutil.ReadAll(r.Body)
+
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&e)
 	if err != nil {
-		fmt.Fprintf(w, "error")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		// return
 	}
 
-	newEvent, Id := GetNewEvent()
-	fmt.Println("Producing message with Id: " + Id)
+	b, err := json.Marshal(e)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	Utils.CreateKafkaProducer(topic, newEvent)
+	protoMessage := &protoUtil.Sample{}
+	// JSON to Proto
+	if err := jsonpb.Unmarshal(strings.NewReader(string(b)), protoMessage); err != nil {
+		log.Fatalln("Error converting JSON to proto:", err)
+	}
 
-	json.Unmarshal(reqBody, &newEvent)
+	fmt.Println("Producing message with Id: " + e.Id)
+	Utils.CreateKafkaProducer(topic, protoMessage)
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newEvent)
-}
-
-type NewEvent struct {
-	Id          string
-	Label       string
-	Description string
-	Version     int32
 }
 
 func GetNewEvent() (proto.Message, string) {
