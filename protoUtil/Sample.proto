@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package protoUtil;
+
+
+message Sample {
+    string Id=1;
+    string Label = 2;
+    string Description = 3;
+    int32 Version = 4;
+}
