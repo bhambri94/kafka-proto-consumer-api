@@ -3,14 +3,15 @@ package Utils
 import (
 	"flag"
 	"fmt"
-	"kafka-consumer-poll-interval/constants"
-	"kafka-consumer-poll-interval/protoUtil"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/kafka-proto-consumer-api/constants"
+	"github.com/kafka-proto-consumer-api/protoUtil"
 
 	"github.com/Shopify/sarama"
 	"github.com/golang/protobuf/jsonpb"

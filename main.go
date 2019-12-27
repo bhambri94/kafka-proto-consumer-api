@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"kafka-proto-consumer-api/Utils"
-	"kafka-proto-consumer-api/protoUtil"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
 	"strings"
+
+	"github.com/kafka-proto-consumer-api/Utils"
+	"github.com/kafka-proto-consumer-api/protoUtil"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
