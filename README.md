@@ -13,7 +13,7 @@ from source $ cd $GOPATH/src $ git clone https://github.com/bhambri94/kafka-prot
 
 ## Usage
 
-# Consumer Api: 
+### Consumer Api: 
 
 ```
 curl -X GET
@@ -26,7 +26,7 @@ http://localhost:3001/kafka-consumer
 
 Description kafkaBroker - kafka broker from where you want to consume kafka message. topic - Kafka topic protoPath - path to the proto file protoFileName - proto file name protoMessageName - message name from proto file you are expecting in the topic mentioned uniqueIdentifier - the key field name that is unique in each proto message uniqueIdentifierValue - unique identifier value pollIntervalSeconds - time in seconds you want to poll at mentioned topic
 
-# Producer Api to test locally: 
+### Producer Api to test locally: 
 ```
 curl -X GET
 http://localhost:3001/kafka-producer/topic=sample_event_topic
