@@ -28,14 +28,14 @@ http://localhost:3001/kafka-consumer
 -d '{ "kafkaBroker":"localhost:9092", "topic":"sample_event_topic", "protoPath":"/Users/shivamkumar/go/src/github.com/kafka-proto-consumer-api/protoUtil", "protoFileName":"Sample.proto", "protoMessageName":"protoUtil.Sample", "uniqueIdentifier":"Id", "uniqueIdentifierValue":"Aut_955", "pollIntervalSeconds":"100" }'
 ```
 
-Description kafkaBroker - kafka broker from where you want to consume kafka message.
-topic - Kafka topic 
-protoPath - path to the proto file 
-protoFileName - proto file name 
-protoMessageName - message name from proto file you are expecting in the topic mentioned 
-uniqueIdentifier - the key field name that is unique in each proto message 
-uniqueIdentifierValue - unique identifier value 
-pollIntervalSeconds - time in seconds you want to poll at mentioned topic
+Description kafkaBroker - kafka broker from where you want to consume kafka message.\n
+topic - Kafka topic \n
+protoPath - path to the proto file \n
+protoFileName - proto file name \n
+protoMessageName - message name from proto file you are expecting in the topic mentioned \n
+uniqueIdentifier - the key field name that is unique in each proto message \n
+uniqueIdentifierValue - unique identifier value \n
+pollIntervalSeconds - time in seconds you want to poll at mentioned topic \n
 
 #### Producer Api to test locally: 
 ```
