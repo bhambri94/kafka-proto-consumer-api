@@ -8,7 +8,11 @@ This utility can be useful when you want to quickly look into the protobuf messa
 
 ### Build 
 ```
-from source $ cd $GOPATH/src $ git clone https://github.com/bhambri94/kafka-proto-consumer-api.git $ GO111MODULE=on go build -o ./kafka-proto-consumer-api main.go $ ./kafka-proto-consumer-api
+from source 
+$ cd $GOPATH/src 
+$ git clone https://github.com/bhambri94/kafka-proto-consumer-api.git 
+$ GO111MODULE=on go build -o ./kafka-proto-consumer-api main.go 
+$ ./kafka-proto-consumer-api
 ```
 
 ### Usage
