@@ -170,13 +170,13 @@ type ProtobufDetails struct {
 	UniqueIdentifierValue string   `json:"uniqueIdentifierValue"`
 }
 
-func CreateKafkaConsumerWithVariableProto(topic string, ProtoDetails ProtobufDetails, consumeForSeconds int) (string, string) {
+func CreateKafkaConsumerWithVariableProto(brokerList string, topic string, ProtoDetails ProtobufDetails, consumeForSeconds int) (string, string) {
 	ReturnBackState = "false"
 	flag.Parse()
 	start := time.Now()
 	done := make(chan bool)
 
-	fmt.Println("Consuming events from Topic: " + topic + " for Id: " + ProtoDetails.UniqueIdentifier + " polling for " + strconv.Itoa(consumeForSeconds) + " seconds")
+	fmt.Println("Consuming events from Topic: " + topic + " for Id: " + ProtoDetails.UniqueIdentifierValue + " polling for " + strconv.Itoa(consumeForSeconds) + " seconds")
 
 	if brokerList == "" {
 		PrintUsageErrorAndExit("You have to provide -brokers as a comma-separated list")
@@ -252,7 +252,6 @@ func CreateKafkaConsumerWithVariableProto(topic string, ProtoDetails ProtobufDet
 			findElement, _ := stringify.FieldValue(msg.Value, ProtoDetails.UniqueIdentifier)
 			if findElement == ProtoDetails.UniqueIdentifierValue {
 				jsonString, _ := stringify.JsonString(msg.Value, false)
-
 				fmt.Println(jsonString)
 				fmt.Println("MATCHED!! ")
 				ReturnBackState = "true"

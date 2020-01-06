@@ -74,6 +74,7 @@ func consumerPoll(w http.ResponseWriter, r *http.Request) {
 }
 
 type KafkaConsumerRequest struct {
+	KafkaBroker           string `json:"kafkaBroker"`
 	Topic                 string `json:"topic"`
 	ProtoPath             string `json:"protoPath"`
 	ProtoMessageName      string `json:"protoMessageName"`
@@ -85,7 +86,6 @@ type KafkaConsumerRequest struct {
 
 func KafkaConsumerWithAnyProtoPathAndUniqueIdentifierSearchPoll(w http.ResponseWriter, r *http.Request) {
 	var kafkaConsumerRequest KafkaConsumerRequest
-
 	w.Header().Set("Content-Type", "application/json")
 
 	dec := json.NewDecoder(r.Body)
@@ -95,6 +95,7 @@ func KafkaConsumerWithAnyProtoPathAndUniqueIdentifierSearchPoll(w http.ResponseW
 		// return
 	}
 
+	kafkaBroker := kafkaConsumerRequest.KafkaBroker
 	topic := kafkaConsumerRequest.Topic
 	UniqueIdentifier := kafkaConsumerRequest.UniqueIdentifier
 	UniqueIdentifierValue := kafkaConsumerRequest.UniqueIdentifierValue
@@ -105,7 +106,6 @@ func KafkaConsumerWithAnyProtoPathAndUniqueIdentifierSearchPoll(w http.ResponseW
 	seconds, _ := strconv.Atoi(PollIntervalSeconds)
 	reqBody, err := ioutil.ReadAll(r.Body)
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Println(topic, UniqueIdentifier, UniqueIdentifierValue, PollIntervalSeconds, ProtoFileName, ProtoMessageName)
 
 	protoDetails := Utils.ProtobufDetails{
 		ProtoPath:             ProtoPath,
@@ -115,7 +115,7 @@ func KafkaConsumerWithAnyProtoPathAndUniqueIdentifierSearchPoll(w http.ResponseW
 		UniqueIdentifierValue: UniqueIdentifierValue,
 	}
 
-	a, b := Utils.CreateKafkaConsumerWithVariableProto(topic, protoDetails, seconds)
+	a, b := Utils.CreateKafkaConsumerWithVariableProto(kafkaBroker, topic, protoDetails, seconds)
 	if err != nil {
 		fmt.Fprintf(w, "error")
 	}
