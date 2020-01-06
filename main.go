@@ -42,6 +42,7 @@ func main() {
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/kafka-consumer/topic={KafkaTopic}&Id={Id}&PollIntervalSeconds={interval}", consumerPoll)
+	router.HandleFunc("/kafka-consumer", KafkaConsumerWithAnyProtoPathAndUniqueIdentifierSearchPoll)
 	router.HandleFunc("/kafka-producer/topic={KafkaTopic}", ProducerToTopic)
 	fmt.Println("Server started successfully on port 3001")
 	log.Fatal(http.ListenAndServe(":3001", router))
@@ -56,6 +57,65 @@ func consumerPoll(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	a, b := Utils.CreateKafkaConsumer(topic, DriverID, seconds, "Sample")
+	if err != nil {
+		fmt.Fprintf(w, "error")
+	}
+	if a == "expired" {
+		b = ""
+	}
+	newEvent := event{
+		EventState: a,
+		Message:    b,
+	}
+
+	json.Unmarshal(reqBody, &newEvent)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(newEvent)
+}
+
+type KafkaConsumerRequest struct {
+	KafkaBroker           string `json:"kafkaBroker"`
+	Topic                 string `json:"topic"`
+	ProtoPath             string `json:"protoPath"`
+	ProtoMessageName      string `json:"protoMessageName"`
+	ProtoFileName         string `json:"protoFileName"`
+	UniqueIdentifier      string `json:"uniqueIdentifier"`
+	UniqueIdentifierValue string `json:"uniqueIdentifierValue"`
+	PollIntervalSeconds   string `json:"pollIntervalSeconds"`
+}
+
+func KafkaConsumerWithAnyProtoPathAndUniqueIdentifierSearchPoll(w http.ResponseWriter, r *http.Request) {
+	var kafkaConsumerRequest KafkaConsumerRequest
+	w.Header().Set("Content-Type", "application/json")
+
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&kafkaConsumerRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		// return
+	}
+
+	kafkaBroker := kafkaConsumerRequest.KafkaBroker
+	topic := kafkaConsumerRequest.Topic
+	UniqueIdentifier := kafkaConsumerRequest.UniqueIdentifier
+	UniqueIdentifierValue := kafkaConsumerRequest.UniqueIdentifierValue
+	PollIntervalSeconds := kafkaConsumerRequest.PollIntervalSeconds
+	ProtoPath := []string{kafkaConsumerRequest.ProtoPath}
+	ProtoFileName := kafkaConsumerRequest.ProtoFileName
+	ProtoMessageName := kafkaConsumerRequest.ProtoMessageName
+	seconds, _ := strconv.Atoi(PollIntervalSeconds)
+	reqBody, err := ioutil.ReadAll(r.Body)
+	w.Header().Set("Content-Type", "application/json")
+
+	protoDetails := Utils.ProtobufDetails{
+		ProtoPath:             ProtoPath,
+		ProtoFileName:         ProtoFileName,
+		ProtoMessage:          ProtoMessageName,
+		UniqueIdentifier:      UniqueIdentifier,
+		UniqueIdentifierValue: UniqueIdentifierValue,
+	}
+
+	a, b := Utils.CreateKafkaConsumerWithVariableProto(kafkaBroker, topic, protoDetails, seconds)
 	if err != nil {
 		fmt.Fprintf(w, "error")
 	}
