@@ -21,6 +21,7 @@ import (
 
 type event struct {
 	EventState string `json:"EventState"`
+	Error      string `json:"Error"`
 	Message    string `json:"Message"`
 }
 
@@ -115,20 +116,24 @@ func KafkaConsumerWithAnyProtoPathAndUniqueIdentifierSearchPoll(w http.ResponseW
 		UniqueIdentifierValue: UniqueIdentifierValue,
 	}
 
-	a, b := Utils.CreateKafkaConsumerWithVariableProto(kafkaBroker, topic, protoDetails, seconds)
-	if err != nil {
-		fmt.Fprintf(w, "error")
-	}
-	if a == "expired" {
+	a, b, errorOccured := Utils.CreateKafkaConsumerWithVariableProto(kafkaBroker, topic, protoDetails, seconds)
+	if a == "error" {
 		b = ""
+		w.WriteHeader(http.StatusBadRequest)
+	} else if a == "expired" {
+		b = ""
+		w.WriteHeader(http.StatusNoContent)
+	} else if a == "true" {
+		w.WriteHeader(http.StatusCreated)
 	}
+
 	newEvent := event{
 		EventState: a,
+		Error:      errorOccured.Error(),
 		Message:    b,
 	}
 
 	json.Unmarshal(reqBody, &newEvent)
-	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newEvent)
 }
 

@@ -1,6 +1,7 @@
 package Utils
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -31,6 +32,7 @@ var (
 	bufferSize        = 256
 	ReturnBackState   string
 	ReturnPayloadData string
+	goRoutineError    error
 )
 
 func CreateKafkaConsumer(topic string, DriverId string, consumeForSeconds int, protoToBeConsumed string) (string, string) {
@@ -170,7 +172,7 @@ type ProtobufDetails struct {
 	UniqueIdentifierValue string   `json:"uniqueIdentifierValue"`
 }
 
-func CreateKafkaConsumerWithVariableProto(brokerList string, topic string, ProtoDetails ProtobufDetails, consumeForSeconds int) (string, string) {
+func CreateKafkaConsumerWithVariableProto(brokerList string, topic string, ProtoDetails ProtobufDetails, consumeForSeconds int) (string, string, error) {
 	ReturnBackState = "false"
 	flag.Parse()
 	start := time.Now()
@@ -179,11 +181,15 @@ func CreateKafkaConsumerWithVariableProto(brokerList string, topic string, Proto
 	fmt.Println("Consuming events from Topic: " + topic + " for Id: " + ProtoDetails.UniqueIdentifierValue + " polling for " + strconv.Itoa(consumeForSeconds) + " seconds")
 
 	if brokerList == "" {
-		PrintUsageErrorAndExit("You have to provide -brokers as a comma-separated list")
+		fmt.Println("You have to provide brokers as a comma-separated list")
+		err1 := errors.New("You have to provide brokers as a comma-separated list")
+		return "error", "", err1
 	}
 
 	if topic == "" {
-		PrintUsageErrorAndExit("-topic is required")
+		fmt.Println("-topic is required")
+		err1 := errors.New("topic is required")
+		return "error", "", err1
 	}
 
 	var initialOffset int64
@@ -193,17 +199,22 @@ func CreateKafkaConsumerWithVariableProto(brokerList string, topic string, Proto
 	case "newest":
 		initialOffset = sarama.OffsetNewest
 	default:
-		PrintUsageErrorAndExit("-offset should be `oldest` or `newest`")
+		fmt.Println("-offset should be `oldest` or `newest`")
+		err1 := errors.New("offset should be `oldest` or `newest")
+		return "error", "", err1
+
 	}
 
 	c, err := sarama.NewConsumer(strings.Split(brokerList, ","), nil)
 	if err != nil {
-		PrintErrorAndExit(69, "Failed to start consumer: %s", err)
+		fmt.Println(69, "Failed to start consumer: %s", err)
+		return "error", "", err
 	}
 
 	partitionList, err := GetPartitions(c)
 	if err != nil {
-		PrintErrorAndExit(69, "Failed to get the list of partitions: %s", err)
+		fmt.Println(69, "Failed to get the list of partitions: %s", err)
+		return "error", "", err
 	}
 
 	var (
@@ -215,7 +226,8 @@ func CreateKafkaConsumerWithVariableProto(brokerList string, topic string, Proto
 	for _, partition := range partitionList {
 		pc, err := c.ConsumePartition(topic, partition, initialOffset)
 		if err != nil {
-			PrintErrorAndExit(69, "Failed to start consumer for partition %d: %s", partition, err)
+			fmt.Println(69, "Failed to start consumer for partition %d: %s", partition, err)
+			return "error", "", err
 		}
 
 		go func(pc sarama.PartitionConsumer) {
@@ -234,22 +246,31 @@ func CreateKafkaConsumerWithVariableProto(brokerList string, topic string, Proto
 
 	go func() {
 		for {
-			// fmt.Println(time.Since(start).Seconds())
 			if int(time.Since(start).Seconds()) > consumeForSeconds {
 				ReturnBackState = "expired"
 				done <- true
-
 				break
 			}
 			time.Sleep(2 * time.Second)
 		}
-
 	}()
 
 	go func() {
 		for msg := range messages {
-			stringify, _ := protobuf_decoder.NewProtobufJSONStringify(ProtoDetails.ProtoPath, ProtoDetails.ProtoFileName, ProtoDetails.ProtoMessage)
-			findElement, _ := stringify.FieldValue(msg.Value, ProtoDetails.UniqueIdentifier)
+			stringify, e1 := protobuf_decoder.NewProtobufJSONStringify(ProtoDetails.ProtoPath, ProtoDetails.ProtoFileName, ProtoDetails.ProtoMessage)
+			if e1 != nil {
+				goRoutineError = e1
+				ReturnBackState = "error"
+				ReturnPayloadData = ""
+				done <- true
+			}
+			findElement, e2 := stringify.FieldValue(msg.Value, ProtoDetails.UniqueIdentifier)
+			if e2 != nil {
+				goRoutineError = e2
+				ReturnBackState = "error"
+				ReturnPayloadData = ""
+				done <- true
+			}
 			if findElement == ProtoDetails.UniqueIdentifierValue {
 				jsonString, _ := stringify.JsonString(msg.Value, false)
 				fmt.Println(jsonString)
@@ -269,7 +290,13 @@ func CreateKafkaConsumerWithVariableProto(brokerList string, topic string, Proto
 		fmt.Println("Failed to close consumer: ", err)
 	}
 
-	return ReturnBackState, ReturnPayloadData
+	if goRoutineError != nil {
+		err = goRoutineError
+	} else if err == nil {
+		err = errors.New("")
+	}
+
+	return ReturnBackState, ReturnPayloadData, err
 }
 
 func PrintErrorAndExit(code int, format string, values ...interface{}) {

@@ -103,7 +103,7 @@ func (c *ProtobufJSONStringify) FieldValue(protobufMsg []byte, field string) (in
 	if err != nil {
 		return "", err
 	}
-	return dm.GetFieldByName(field), nil
+	return dm.TryGetFieldByName(field)
 }
 
 func fileDescriptorsFromProtoFiles(importPaths []string, fileNames ...string) ([]*desc.FileDescriptor, error) {
