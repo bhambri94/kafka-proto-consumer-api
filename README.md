@@ -5,11 +5,22 @@ kafka-proto-consumer-apis provides kafka consumer api which reads protobuf encod
 
 This utility can be useful when you want to quickly look into the protobuf messages of a topic and search specific key value pair out of random messages on kafka topic. It works over the proto source file and don't need you to compile it using protoc.
 
+### Install Go and set GOPATH
+```
+$ brew install go
+$ sudo vi ~/.bash_profile
+$ export HOME=/Users/shivamkumar
+$ export GOPATH=$HOME/go
+$ export PATH=$PATH:$GOPATH/bin
+$ source ~/.bash_profile
+```
 
 ### Build 
 ```
 from source 
-$ cd $GOPATH/src 
+$ cd $GOPATH/src
+$ mkdir github.com 
+$ cd github.com
 $ git clone https://github.com/bhambri94/kafka-proto-consumer-api.git 
 $ cd kafka-proto-consumer-api
 $ GO111MODULE=on go build -o ./kafka-proto-consumer-api main.go 
